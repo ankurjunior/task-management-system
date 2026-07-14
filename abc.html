@@ -1,0 +1,2216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Task Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--gray-100);
+            min-height: 100vh;
+        }
+
+        /* Auth Screen */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-box {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-box h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        .auth-box p {
+            text-align: center;
+            color: var(--gray-500);
+            margin-bottom: 24px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 24px;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-500);
+            position: relative;
+        }
+
+        .auth-tab.active {
+            color: var(--primary);
+        }
+
+        .auth-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* Main App Layout */
+        .app-container {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .app-container.active {
+            display: block;
+        }
+
+        .header {
+            background: white;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 24px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--gray-100);
+            border-radius: 8px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* Navigation */
+        .main-content {
+            display: flex;
+        }
+
+        .sidebar {
+            width: 240px;
+            background: white;
+            min-height: calc(100vh - 68px);
+            padding: 20px 0;
+            border-right: 1px solid var(--gray-200);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            background: var(--gray-50);
+            color: var(--gray-900);
+        }
+
+        .nav-item.active {
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary);
+            border-right: 3px solid var(--primary);
+        }
+
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .nav-section {
+            padding: 16px 24px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--gray-400);
+            letter-spacing: 0.5px;
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            max-height: calc(100vh - 68px);
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        /* Dashboard Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: var(--gray-500);
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .stat-card .trend {
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .stat-card .trend.up {
+            color: var(--success);
+        }
+
+        .stat-card .trend.down {
+            color: var(--danger);
+        }
+
+        /* Task List */
+        .task-list {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .task-list-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-list-header h3 {
+            font-size: 16px;
+            color: var(--gray-800);
+        }
+
+        .task-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-100);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .task-item:hover {
+            background: var(--gray-50);
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .task-title {
+            font-weight: 500;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .subtask-indicator {
+            font-size: 11px;
+            padding: 2px 6px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            color: var(--gray-600);
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-not-started {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .status-in-progress {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .status-complete {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .priority-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .priority-high {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .priority-medium {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .priority-low {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--gray-200);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 18px;
+            color: var(--gray-800);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray-400);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Task Detail */
+        .task-detail-section {
+            margin-bottom: 24px;
+        }
+
+        .task-detail-section h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 12px;
+        }
+
+        .detail-row {
+            display: flex;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .detail-label {
+            width: 140px;
+            color: var(--gray-500);
+            font-size: 14px;
+        }
+
+        .detail-value {
+            flex: 1;
+            color: var(--gray-800);
+            font-size: 14px;
+        }
+
+        /* Subtasks */
+        .subtask-list {
+            margin-top: 12px;
+        }
+
+        .subtask-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--gray-50);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .subtask-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .subtask-info {
+            flex: 1;
+        }
+
+        .subtask-title {
+            font-size: 14px;
+            color: var(--gray-800);
+        }
+
+        .subtask-meta {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 4px;
+        }
+
+        /* History */
+        .history-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .history-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--gray-100);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .history-content {
+            flex: 1;
+        }
+
+        .history-text {
+            font-size: 14px;
+            color: var(--gray-700);
+        }
+
+        .history-date {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 4px;
+        }
+
+        /* Filters */
+        .filters-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        /* User Management */
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .user-table th, .user-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .user-table th {
+            font-weight: 600;
+            color: var(--gray-600);
+            font-size: 13px;
+            background: var(--gray-50);
+        }
+
+        .user-table td {
+            font-size: 14px;
+            color: var(--gray-800);
+        }
+
+        .user-role {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .role-admin {
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary);
+        }
+
+        .role-user {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        /* Reports */
+        .report-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .report-section h3 {
+            font-size: 16px;
+            color: var(--gray-800);
+            margin-bottom: 16px;
+        }
+
+        .chart-placeholder {
+            height: 200px;
+            background: var(--gray-50);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-400);
+        }
+
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 16px;
+            height: 150px;
+            padding: 20px 0;
+        }
+
+        .bar-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bar {
+            width: 100%;
+            max-width: 60px;
+            background: var(--primary);
+            border-radius: 4px 4px 0 0;
+            transition: height 0.3s;
+        }
+
+        .bar-label {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .bar-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray-500);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 8px;
+            color: var(--gray-700);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2000;
+        }
+
+        .toast {
+            background: var(--gray-800);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-top: 8px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Screen -->
+    <div class="auth-container" id="authScreen">
+        <div class="auth-box">
+            <h1>📋 TaskFlow</h1>
+            <p>Collaborative Task Management</p>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="showAuthTab('login')">Login</button>
+                <button class="auth-tab" onclick="showAuthTab('register')">Register</button>
+            </div>
+            
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+            
+            <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="registerName" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="registerPassword" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Department</label>
+                    <input type="text" id="registerDept" placeholder="e.g., Engineering, Marketing">
+                </div>
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="appContainer">
+        <header class="header">
+            <h1>📋 TaskFlow</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary btn-sm" onclick="openNewTaskModal()">+ New Task</button>
+                <div class="user-menu">
+                    <div class="user-avatar" id="userAvatar">JD</div>
+                    <span id="userName">John Doe</span>
+                    <button class="btn btn-sm" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <nav class="sidebar">
+                <button class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Dashboard
+                </button>
+                <button class="nav-item" data-page="my-tasks" onclick="navigateTo('my-tasks')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path></svg>
+                    My Tasks
+                </button>
+                <button class="nav-item" data-page="assigned" onclick="navigateTo('assigned')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg>
+                    Assigned by Me
+                </button>
+                
+                <div class="nav-section">Reports</div>
+                <button class="nav-item" data-page="reports" onclick="navigateTo('reports')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path></svg>
+                    Reports & Analytics
+                </button>
+                
+                <div class="nav-section">System</div>
+                <button class="nav-item" data-page="users" onclick="navigateTo('users')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg>
+                    User Management
+                </button>
+                <button class="nav-item" data-page="system-dashboard" onclick="navigateTo('system-dashboard')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
+                    System Overview
+                </button>
+            </nav>
+            
+            <main class="content" id="mainContent">
+                <!-- Content will be rendered here -->
+            </main>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div class="modal-overlay" id="taskModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="taskModalTitle">Create New Task</h2>
+                <button class="modal-close" onclick="closeModal('taskModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm" onsubmit="handleTaskSubmit(event)">
+                    <input type="hidden" id="taskId">
+                    <input type="hidden" id="parentTaskId">
+                    
+                    <div class="form-group">
+                        <label>Task Title *</label>
+                        <input type="text" id="taskTitle" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="taskDescription" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Assign To *</label>
+                            <select id="taskAssignee" required>
+                                <option value="">Select user...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <select id="taskPriority">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Expected Completion *</label>
+                            <input type="date" id="taskDueDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="taskStatus">
+                                <option value="not-started">Not Started</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="complete">Complete</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" id="progressGroup" style="display:none;">
+                        <label>Completion Percentage: <span id="progressValue">0</span>%</label>
+                        <input type="range" id="taskProgress" min="0" max="100" value="0" oninput="updateProgressDisplay()">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('taskModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="document.getElementById('taskForm').requestSubmit()">Save Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Detail Modal -->
+    <div class="modal-overlay" id="taskDetailModal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 id="detailTaskTitle">Task Details</h2>
+                <button class="modal-close" onclick="closeModal('taskDetailModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="taskDetailContent">
+                <!-- Task details will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div class="modal-overlay" id="userModal">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 id="userModalTitle">Add New User</h2>
+                <button class="modal-close" onclick="closeModal('userModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm" onsubmit="handleUserSubmit(event)">
+                    <input type="hidden" id="userId">
+                    
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="userFullName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="userEmail" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Department</label>
+                        <input type="text" id="userDept">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="userRole">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="passwordGroup">
+                        <label>Password *</label>
+                        <input type="password" id="userPassword" minlength="6">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('userModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="document.getElementById('userForm').requestSubmit()">Save User</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ============================================
+        // DATA STORE & INITIALIZATION
+        // ============================================
+        
+        const DB_KEY = 'taskflow_db';
+        
+        function getDB() {
+            const data = localStorage.getItem(DB_KEY);
+            if (data) return JSON.parse(data);
+            
+            // Initialize with demo data
+            const initialData = {
+                users: [
+                    { id: 'u1', name: 'John Admin', email: 'admin@example.com', password: 'password', role: 'admin', department: 'Management', createdAt: new Date().toISOString() },
+                    { id: 'u2', name: 'Sarah Developer', email: 'sarah@example.com', password: 'password', role: 'user', department: 'Engineering', createdAt: new Date().toISOString() },
+                    { id: 'u3', name: 'Mike Designer', email: 'mike@example.com', password: 'password', role: 'user', department: 'Design', createdAt: new Date().toISOString() }
+                ],
+                tasks: [],
+                currentUser: null
+            };
+            
+            saveDB(initialData);
+            return initialData;
+        }
+        
+        function saveDB(data) {
+            localStorage.setItem(DB_KEY, JSON.stringify(data));
+        }
+        
+        function generateId() {
+            return 't' + Date.now() + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // ============================================
+        // AUTHENTICATION
+        // ============================================
+        
+        function showAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.auth-tab:nth-child(${tab === 'login' ? 1 : 2})`).classList.add('active');
+            
+            document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+        }
+        
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const db = getDB();
+            const user = db.users.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+                db.currentUser = user.id;
+                saveDB(db);
+                initApp();
+                showToast('Welcome back, ' + user.name + '!');
+            } else {
+                showToast('Invalid email or password', 'error');
+            }
+        }
+        
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const department = document.getElementById('registerDept').value;
+            
+            const db = getDB();
+            
+            if (db.users.some(u => u.email === email)) {
+                showToast('Email already registered', 'error');
+                return;
+            }
+            
+            const newUser = {
+                id: 'u' + Date.now(),
+                name,
+                email,
+                password,
+                role: 'user',
+                department,
+                createdAt: new Date().toISOString()
+            };
+            
+            db.users.push(newUser);
+            db.currentUser = newUser.id;
+            saveDB(db);
+            
+            initApp();
+            showToast('Account created successfully!');
+        }
+        
+        function handleLogout() {
+            const db = getDB();
+            db.currentUser = null;
+            saveDB(db);
+            
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('appContainer').classList.remove('active');
+        }
+        
+        function getCurrentUser() {
+            const db = getDB();
+            return db.users.find(u => u.id === db.currentUser);
+        }
+        
+        // ============================================
+        // APP INITIALIZATION
+        // ============================================
+        
+        function initApp() {
+            const db = getDB();
+            const user = getCurrentUser();
+            
+            if (!user) {
+                document.getElementById('authScreen').style.display = 'flex';
+                document.getElementById('appContainer').classList.remove('active');
+                return;
+            }
+            
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('appContainer').classList.add('active');
+            
+            // Update user info in header
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('userAvatar').textContent = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+            
+            // Populate assignee dropdown
+            populateUserDropdowns();
+            
+            // Navigate to dashboard
+            navigateTo('dashboard');
+        }
+        
+        function populateUserDropdowns() {
+            const db = getDB();
+            const select = document.getElementById('taskAssignee');
+            select.innerHTML = '<option value="">Select user...</option>';
+            
+            db.users.forEach(user => {
+                select.innerHTML += `<option value="${user.id}">${user.name}</option>`;
+            });
+        }
+        
+        // ============================================
+        // NAVIGATION
+        // ============================================
+        
+        function navigateTo(page) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.page === page);
+            });
+            
+            const content = document.getElementById('mainContent');
+            
+            switch(page) {
+                case 'dashboard':
+                    renderDashboard();
+                    break;
+                case 'my-tasks':
+                    renderMyTasks();
+                    break;
+                case 'assigned':
+                    renderAssignedByMe();
+                    break;
+                case 'reports':
+                    renderReports();
+                    break;
+                case 'users':
+                    renderUserManagement();
+                    break;
+                case 'system-dashboard':
+                    renderSystemDashboard();
+                    break;
+            }
+        }
+        
+        // ============================================
+        // DASHBOARD
+        // ============================================
+        
+        function renderDashboard() {
+            const db = getDB();
+            const user = getCurrentUser();
+            const myTasks = db.tasks.filter(t => t.ownerId === user.id && !t.parentId);
+            
+            const stats = {
+                total: myTasks.length,
+                notStarted: myTasks.filter(t => t.status === 'not-started').length,
+                inProgress: myTasks.filter(t => t.status === 'in-progress').length,
+                complete: myTasks.filter(t => t.status === 'complete').length,
+                overdue: myTasks.filter(t => new Date(t.dueDate) < new Date() && t.status !== 'complete').length
+            };
+            
+            const recentTasks = myTasks.slice(-5).reverse();
+            
+            document.getElementById('mainContent').innerHTML = `
+                <div class="page-header">
+                    <h1 class="page-title">My Dashboard</h1>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Tasks</h3>
+                        <div class="value">${stats.total}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Not Started</h3>
+                        <div class="value">${stats.notStarted}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>In Progress</h3>
+                        <div class="value">${stats.inProgress}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Completed</h3>
+                        <div class="value">${stats.complete}</div>
+                        <div class="trend up">${stats.total ? Math.round(stats.complete / stats.total * 100) : 0}% completion rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Overdue</h3>
+                        <div class="value" style="color: var(--danger)">${stats.overdue}</div>
+                        ${stats.overdue > 0 ? '<div class="trend down">Requires attention</div>' : ''}
+                    </div>
+                </div>
+                
+                <div class="task-list">
+                    <div class="task-list-header">
+                        <h3>Recent Tasks Assigned to Me</h3>
+                        <button class="btn btn-sm btn-secondary" onclick="navigateTo('my-tasks')">View All</button>
+                    </div>
+                    ${recentTasks.length === 0 ? `
+                        <div class="empty-state">
+                            <h3>No tasks yet</h3>
+                            <p>Tasks assigned to you will appear here</p>
+                        </div>
+                    ` : recentTasks.map(task => renderTaskItem(task)).join('')}
+                </div>
+            `;
+        }
+        
+        // ============================================
+        // TASK MANAGEMENT
+        // ============================================
+        
+        function renderTaskItem(task) {
+            const db = getDB();
+            const subtasks = db.tasks.filter(t => t.parentId === task.id);
+            const creator = db.users.find(u => u.id === task.createdBy);
+            const owner = db.users.find(u => u.id === task.ownerId);
+            
+            return `
+                <div class="task-item" onclick="openTaskDetail('${task.id}')">
+                    <div class="task-item-header">
+                        <div class="task-title">
+                            ${task.title}
+                            ${subtasks.length > 0 ? `<span class="subtask-indicator">${subtasks.filter(s => s.status === 'complete').length}/${subtasks.length} subtasks</span>` : ''}
+                        </div>
+                        <span class="status-badge status-${task.status}">${formatStatus(task.status)}</span>
+                    </div>
+                    <div class="task-meta">
+                        <span>📅 Due: ${formatDate(task.dueDate)}</span>
+                        <span>👤 Owner: ${owner?.name || 'Unknown'}</span>
+                        <span class="priority-badge priority-${task.priority}">${task.priority}</span>
+                    </div>
+                    ${task.status === 'in-progress' ? `
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${task.progress || 0}%"></div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        function renderMyTasks() {
+            const db = getDB();
+            const user = getCurrentUser();
+            let tasks = db.tasks.filter(t => t.ownerId === user.id && !t.parentId);
+            
+            document.getElementById('mainContent').innerHTML = `
+                <div class="page-header">
+                    <h1 class="page-title">My Tasks</h1>
+                    <button class="btn btn-primary" onclick="openNewTaskModal()">+ New Task</button>
+                </div>
+                
+                <div class="filters-bar">
+                    <input type="text" class="search-input" placeholder="Search tasks..." oninput="filterTasks(this.value, 'my-tasks')">
+                    <select class="filter-select" onchange="filterByStatus(this.value, 'my-tasks')">
+                        <option value="">All Status</option>
+                        <option value="not-started">Not Started</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="complete">Complete</option>
+                    </select>
+                    <select class="filter-select" onchange="filterByPriority(this.value, 'my-tasks')">
+                        <option value="">All Priority</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                    <input type="date" class="filter-select" onchange="filterByDate(this.value, 'my-tasks')" placeholder="Due Date">
+                </div>
+                
+                <div class="task-list" id="taskListContainer">
+                    ${tasks.length === 0 ? `
+                        <div class="empty-state">
+                            <h3>No tasks assigned to you</h3>
+                            <p>Tasks assigned to you will appear here</p>
+                        </div>
+                    ` : tasks.map(task => renderTaskItem(task)).join('')}
+                </div>
+            `;
+        }
+        
+        function renderAssignedByMe() {
+            const db = getDB();
+            const user = getCurrentUser();
+            let tasks = db.tasks.filter(t => t.createdBy === user.id && !t.parentId);
+            
+            document.getElementById('mainContent').innerHTML = `
+                <div class="page-header">
+                    <h1 class="page-title">Tasks Created by Me</h1>
+                    <button class="btn btn-primary" onclick="openNewTaskModal()">+ New Task</button>
+                </div>
+                
+                <div class="filters-bar">
+                    <input type="text" class="search-input" placeholder="Search tasks..." oninput="filterTasks(this.value, 'assigned')">
+                    <select class="filter-select" onchange="filterByStatus(this.value, 'assigned')">
+                        <option value="">All Status</option>
+                        <option value="not-started">Not Started</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="complete">Complete</option>
+                    </select>
+                </div>
+                
+                <div class="task-list" id="taskListContainer">
+                    ${tasks.length === 0 ? `
+                        <div class="empty-state">
+                            <h3>No tasks created yet</h3>
+                            <p>Tasks you create and assign will appear here</p>
+                        </div>
+                    ` : tasks.map(task => renderTaskItem(task)).join('')}
+                </div>
+            `;
+        }
+        
+        // ============================================
+        // TASK DETAIL & SUBTASKS
+        // ============================================
+        
+        function openTaskDetail(taskId) {
+            const db = getDB();
+            const task = db.tasks.find(t => t.id === taskId);
+            const subtasks = db.tasks.filter(t => t.parentId === taskId);
+            const creator = db.users.find(u => u.id === task.createdBy);
+            const owner = db.users.find(u => u.id === task.ownerId);
+            const user = getCurrentUser();
+            const isOwner = task.ownerId === user.id;
+            const isCreator = task.createdBy === user.id;
+            
+            document.getElementById('detailTaskTitle').textContent = task.title;
+            
+            document.getElementById('taskDetailContent').innerHTML = `
+                <div class="task-detail-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <span class="status-badge status-${task.status}">${formatStatus(task.status)}</span>
+                        <span class="priority-badge priority-${task.priority}">${task.priority} priority</span>
+                    </div>
+                    
+                    ${task.description ? `<p style="color: var(--gray-600); margin-bottom: 16px;">${task.description}</p>` : ''}
+                    
+                    ${task.status === 'in-progress' ? `
+                        <div style="margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px;">
+                                <span>Progress</span>
+                                <span>${task.progress || 0}%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${task.progress || 0}%"></div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <div class="task-detail-section">
+                    <h4>Details</h4>
+                    <div class="detail-row">
+                        <span class="detail-label">Created By</span>
+                        <span class="detail-value">${creator?.name || 'Unknown'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Created On</span>
+                        <span class="detail-value">${formatDateTime(task.createdAt)}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Current Owner</span>
+                        <span class="detail-value">${owner?.name || 'Unknown'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Due Date</span>
+                        <span class="detail-value">${formatDate(task.dueDate)}</span>
+                    </div>
+                    ${task.completedAt ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Completed On</span>
+                            <span class="detail-value">${formatDateTime(task.completedAt)}</span>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                ${!task.parentId ? `
+                    <div class="task-detail-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h4>Sub-Tasks (${subtasks.length})</h4>
+                            ${isOwner ? `<button class="btn btn-sm btn-secondary" onclick="openSubtaskModal('${task.id}')">+ Add Subtask</button>` : ''}
+                        </div>
+                        <div class="subtask-list">
+                            ${subtasks.length === 0 ? '<p style="color: var(--gray-500); font-size: 14px; padding: 12px 0;">No subtasks yet</p>' : ''}
+                            ${subtasks.map(st => {
+                                const stOwner = db.users.find(u => u.id === st.ownerId);
+                                return `
+                                    <div class="subtask-item">
+                                        <input type="checkbox" class="subtask-checkbox" ${st.status === 'complete' ? 'checked' : ''} 
+                                            onchange="toggleSubtaskComplete('${st.id}', this.checked)" ${st.ownerId !== user.id ? 'disabled' : ''}>
+                                        <div class="subtask-info">
+                                            <div class="subtask-title">${st.title}</div>
+                                            <div class="subtask-meta">
+                                                Owner: ${stOwner?.name || 'Unknown'} · Due: ${formatDate(st.dueDate)}
+                                                · <span class="status-badge status-${st.status}" style="font-size: 11px; padding: 2px 6px;">${formatStatus(st.status)}</span>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-sm btn-secondary" onclick="openTaskDetail('${st.id}')">View</button>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div class="task-detail-section">
+                    <h4>History</h4>
+                    ${(task.history || []).length === 0 ? '<p style="color: var(--gray-500); font-size: 14px;">No history yet</p>' : ''}
+                    ${(task.history || []).reverse().map(h => `
+                        <div class="history-item">
+                            <div class="history-icon">📝</div>
+                            <div class="history-content">
+                                <div class="history-text">${h.action}</div>
+                                <div class="history-date">${formatDateTime(h.timestamp)}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                    ${isOwner || isCreator ? `<button class="btn btn-secondary" onclick="editTask('${task.id}')">Edit Task</button>` : ''}
+                    ${isOwner && task.status !== 'complete' ? `<button class="btn btn-success" onclick="updateTaskStatus('${task.id}', 'complete')">Mark Complete</button>` : ''}
+                    ${isOwner ? `<button class="btn btn-secondary" onclick="reassignTask('${task.id}')">Reassign</button>` : ''}
+                </div>
+            `;
+            
+            openModal('taskDetailModal');
+        }
+        
+        function toggleSubtaskComplete(subtaskId, isComplete) {
+            const db = getDB();
+            const subtask = db.tasks.find(t => t.id === subtaskId);
+            const user = getCurrentUser();
+            
+            subtask.status = isComplete ? 'complete' : 'not-started';
+            subtask.progress = isComplete ? 100 : 0;
+            if (isComplete) subtask.completedAt = new Date().toISOString();
+            
+            addTaskHistory(subtask, `Status changed to ${formatStatus(subtask.status)} by ${user.name}`);
+            
+            saveDB(db);
+            
+            // Check if all subtasks are complete
+            const parentTask = db.tasks.find(t => t.id === subtask.parentId);
+            if (parentTask) {
+                const allSubtasks = db.tasks.filter(t => t.parentId === parentTask.id);
+                const allComplete = allSubtasks.every(t => t.status === 'complete');
+                
+                if (allComplete && allSubtasks.length > 0) {
+                    showToast('All subtasks complete! The parent task owner has been notified to review and close the task.');
+                    addTaskHistory(parentTask, `All subtasks completed. Ready for review.`);
+                    saveDB(db);
+                }
+            }
+            
+            openTaskDetail(subtask.parentId);
+        }
+        
+        // ============================================
+        // TASK CRUD OPERATIONS
+        // ============================================
+        
+        function openNewTaskModal(parentId = null) {
+            document.getElementById('taskModalTitle').textContent = parentId ? 'Create Subtask' : 'Create New Task';
+            document.getElementById('taskForm').reset();
+            document.getElementById('taskId').value = '';
+            document.getElementById('parentTaskId').value = parentId || '';
+            document.getElementById('progressGroup').style.display = 'none';
+            
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('taskDueDate').min = today;
+            
+            populateUserDropdowns();
+            openModal('taskModal');
+        }
+        
+        function openSubtaskModal(parentId) {
+            closeModal('taskDetailModal');
+            openNewTaskModal(parentId);
+        }
+        
+        function editTask(taskId) {
+            const db = getDB();
+            const task = db.tasks.find(t => t.id === taskId);
+            
+            document.getElementById('taskModalTitle').textContent = 'Edit Task';
+            document.getElementById('taskId').value = task.id;
+            document.getElementById('parentTaskId').value = task.parentId || '';
+            document.getElementById('taskTitle').value = task.title;
+            document.getElementById('taskDescription').value = task.description || '';
+            document.getElementById('taskAssignee').value = task.ownerId;
+            document.getElementById('taskPriority').value = task.priority;
+            document.getElementById('taskDueDate').value = task.dueDate;
+            document.getElementById('taskStatus').value = task.status;
+            document.getElementById('taskProgress').value = task.progress || 0;
+            document.getElementById('progressValue').textContent = task.progress || 0;
+            
+            document.getElementById('progressGroup').style.display = task.status === 'in-progress' ? 'block' : 'none';
+            
+            populateUserDropdowns();
+            document.getElementById('taskAssignee').value = task.ownerId;
+            
+            closeModal('taskDetailModal');
+            openModal('taskModal');
+        }
+        
+        function handleTaskSubmit(e) {
+            e.preventDefault();
+            
+            const db = getDB();
+            const user = getCurrentUser();
+            const taskId = document.getElementById('taskId').value;
+            const parentId = document.getElementById('parentTaskId').value;
+            
+            const taskData = {
+                title: document.getElementById('taskTitle').value,
+                description: document.getElementById('taskDescription').value,
+                ownerId: document.getElementById('taskAssignee').value,
+                priority: document.getElementById('taskPriority').value,
+                dueDate: document.getElementById('taskDueDate').value,
+                status: document.getElementById('taskStatus').value,
+                progress: document.getElementById('taskStatus').value === 'in-progress' ? parseInt(document.getElementById('taskProgress').value) : (document.getElementById('taskStatus').value === 'complete' ? 100 : 0)
+            };
+            
+            if (taskId) {
+                // Update existing task
+                const task = db.tasks.find(t => t.id === taskId);
+                const oldOwner = task.ownerId;
+                
+                Object.assign(task, taskData);
+                task.updatedAt = new Date().toISOString();
+                
+                if (oldOwner !== taskData.ownerId) {
+                    const newOwner = db.users.find(u => u.id === taskData.ownerId);
+                    const oldOwnerUser = db.users.find(u => u.id === oldOwner);
+                    addTaskHistory(task, `Reassigned from ${oldOwnerUser?.name} to ${newOwner?.name} by ${user.name}`);
+                    
+                    // Track owner history
+                    if (!task.ownerHistory) task.ownerHistory = [];
+                    task.ownerHistory.push({
+                        fromOwner: oldOwner,
+                        toOwner: taskData.ownerId,
+                        changedBy: user.id,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+                
+                addTaskHistory(task, `Task updated by ${user.name}`);
+                
+                if (taskData.status === 'complete' && !task.completedAt) {
+                    task.completedAt = new Date().toISOString();
+                }
+                
+                showToast('Task updated successfully');
+            } else {
+                // Create new task
+                const newTask = {
+                    id: generateId(),
+                    ...taskData,
+                    parentId: parentId || null,
+                    createdBy: user.id,
+                    createdAt: new Date().toISOString(),
+                    history: [],
+                    ownerHistory: []
+                };
+                
+                addTaskHistory(newTask, `Task created by ${user.name}`);
+                db.tasks.push(newTask);
+                
+                if (parentId) {
+                    const parentTask = db.tasks.find(t => t.id === parentId);
+                    addTaskHistory(parentTask, `Subtask "${newTask.title}" added by ${user.name}`);
+                }
+                
+                showToast('Task created successfully');
+            }
+            
+            saveDB(db);
+            closeModal('taskModal');
+            navigateTo('my-tasks');
+        }
+        
+        function updateTaskStatus(taskId, status) {
+            const db = getDB();
+            const task = db.tasks.find(t => t.id === taskId);
+            const user = getCurrentUser();
+            
+            task.status = status;
+            task.progress = status === 'complete' ? 100 : task.progress;
+            if (status === 'complete') task.completedAt = new Date().toISOString();
+            
+            addTaskHistory(task, `Status changed to ${formatStatus(status)} by ${user.name}`);
+            saveDB(db);
+            
+            showToast('Task marked as complete!');
+            closeModal('taskDetailModal');
+            navigateTo('my-tasks');
+        }
+        
+        function reassignTask(taskId) {
+            const db = getDB();
+            const task = db.tasks.find(t => t.id === taskId);
+            
+            const userSelect = prompt('Enter the user ID to reassign to:\n\nAvailable users:\n' + 
+                db.users.map(u => `${u.id}: ${u.name}`).join('\n'));
+            
+            if (userSelect && db.users.find(u => u.id === userSelect)) {
+                const user = getCurrentUser();
+                const oldOwner = db.users.find(u => u.id === task.ownerId);
+                const newOwner = db.users.find(u => u.id === userSelect);
+                
+                if (!task.ownerHistory) task.ownerHistory = [];
+                task.ownerHistory.push({
+                    fromOwner: task.ownerId,
+                    toOwner: userSelect,
+                    changedBy: user.id,
+                    timestamp: new Date().toISOString()
+                });
+                
+                task.ownerId = userSelect;
+                addTaskHistory(task, `Reassigned from ${oldOwner?.name} to ${newOwner?.name} by ${user.name}`);
+                
+                saveDB(db);
+                showToast(`Task reassigned to ${newOwner?.name}`);
+                openTaskDetail(taskId);
+            }
+        }
+        
+        function addTaskHistory(task, action) {
+            if (!task.history) task.history = [];
+            task.history.push({
+                action,
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        function updateProgressDisplay() {
+            const value = document.getElementById('taskProgress').value;
+            document.getElementById('progressValue').textContent = value;
+        }
+        
+        document.getElementById('taskStatus').addEventListener('change', function() {
+            document.getElementById('progressGroup').style.display = this.value === 'in-progress' ? 'block' : 'none';
+        });
+        
+        // ============================================
+        // FILTERS
+        // ============================================
+        
+        function filterTasks(query, page) {
+            const db = getDB();
+            const user = getCurrentUser();
+            let tasks;
+            
+            if (page === 'my-tasks') {
+                tasks = db.tasks.filter(t => t.ownerId === user.id && !t.parentId);
+            } else {
+                tasks = db.tasks.filter(t => t.createdBy === user.id && !t.parentId);
+            }
+            
+            if (query) {
+                tasks = tasks.filter(t => t.title.toLowerCase().includes(query.toLowerCase()));
+            }
+            
+            renderFilteredTasks(tasks);
+        }
+        
+        function filterByStatus(status, page) {
+            const db = getDB();
+            const user = getCurrentUser();
+            let tasks;
+            
+            if (page === 'my-tasks') {
+                tasks = db.tasks.filter(t => t.ownerId === user.id && !t.parentId);
+            } else {
+                tasks = db.tasks.filter(t => t.createdBy === user.id && !t.parentId);
+            }
+            
+            if (status) {
+                tasks = tasks.filter(t => t.status === status);
+            }
+            
+            renderFilteredTasks(tasks);
+        }
+        
+        function filterByPriority(priority, page) {
+            const db = getDB();
+            const user = getCurrentUser();
+            let tasks;
+            
+            if (page === 'my-tasks') {
+                tasks = db.tasks.filter(t => t.ownerId === user.id && !t.parentId);
+            } else {
+                tasks = db.tasks.filter(t => t.createdBy === user.id && !t.parentId);
+            }
+            
+            if (priority) {
+                tasks = tasks.filter(t => t.priority === priority);
+            }
+            
+            renderFilteredTasks(tasks);
+        }
+        
+        function filterByDate(date, page) {
+            const db = getDB();
+            const user = getCurrentUser();
+            let tasks;
+            
+            if (page === 'my-tasks') {
+                tasks = db.tasks.filter(t => t.ownerId === user.id && !t.parentId);
+            } else {
+                tasks = db.tasks.filter(t => t.createdBy === user.id && !t.parentId);
+            }
+            
+            if (date) {
+                tasks = tasks.filter(t => t.dueDate === date);
+            }
+            
+            renderFilteredTasks(tasks);
+        }
+        
+        function renderFilteredTasks(tasks) {
+            const container = document.getElementById('taskListContainer');
+            container.innerHTML = tasks.length === 0 ? `
+                <div class="empty-state">
+                    <h3>No tasks found</h3>
+                    <p>Try adjusting your filters</p>
+                </div>
+            ` : tasks.map(task => renderTaskItem(task)).join('');
+        }
+        
+        // ============================================
+        // REPORTS
+        // ============================================
+        
+        function renderReports() {
+            const db = getDB();
+            const user = getCurrentUser();
+            const myTasks = db.tasks.filter(t => (t.ownerId === user.id || t.createdBy === user.id) && !t.parentId);
+            
+            // Overdue tasks
+            const overdueTasks = myTasks.filter(t => new Date(t.dueDate) < new Date() && t.status !== 'complete');
+            
+            // Tasks by status
+            const statusCounts = {
+                'not-started': myTasks.filter(t => t.status === 'not-started').length,
+                'in-progress': myTasks.filter(t => t.status === 'in-progress').length,
+                'complete': myTasks.filter(t => t.status === 'complete').length
+            };
+            
+            const maxCount = Math.max(...Object.values(statusCounts), 1);
+            
+            document.getElementById('mainContent').innerHTML = `
+                <div class="page-header">
+                    <h1 class="page-title">Reports & Analytics</h1>
+                </div>
+                
+                <div class="report-section">
+                    <h3>Tasks by Status</h3>
+                    <div class="bar-chart">
+                        <div class="bar-item">
+                            <div class="bar-value">${statusCounts['not-started']}</div>
+                            <div class="bar" style="height: ${(statusCounts['not-started'] / maxCount) * 100}px; background: var(--gray-400);"></div>
+                            <div class="bar-label">Not Started</div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-value">${statusCounts['in-progress']}</div>
+                            <div class="bar" style="height: ${(statusCounts['in-progress'] / maxCount) * 100}px; background: var(--warning);"></div>
+                            <div class="bar-label">In Progress</div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-value">${statusCounts['complete']}</div>
+                            <div class="bar" style="height: ${(statusCounts['complete'] / maxCount) * 100}px; background: var(--success);"></div>
+                            <div class="bar-label">Complete</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-section">
+                    <h3>Overdue Tasks (${overdueTasks.length})</h3>
+                    ${overdueTasks.length === 0 ? '<p style="color: var(--gray-500);">No overdue tasks!</p>' : ''}
+                    <div class="task-list" style="box-shadow: none;">
+                        ${overdueTasks.map(task => {
+                            const daysPast = Math.floor((new Date() - new Date(task.dueDate)) / (1000 * 60 * 60 * 24));
+                            return `
+                                <div class="task-item" onclick="openTaskDetail('${task.id}')">
+                                    <div class="task-item-header">
+                                        <div class="task-title">${task.title}</div>
+                                        <span style="color: var(--danger); font-size: 13px;">${daysPast} days overdue</span>
+                                    </div>
+                                    <div class="task-meta">
+                                        <span>Due: ${formatDate(task.dueDate)}</span>
+                                        <span class="status-badge status-${task.status}">${formatStatus(task.status)}</span>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                
+                <div class="report-section">
+                    <h3>Completion Time Analysis</h3>
+                    ${(() => {
+                        const completedTasks = myTasks.filter(t => t.status === 'complete' && t.completedAt);
+                        if (completedTasks.length === 0) return '<p style="color: var(--gray-500);">No completed tasks to analyze</p>';
+                        
+                        return `<div class="task-list" style="box-shadow: none;">
+                            ${completedTasks.map(task => {
+                                const created = new Date(task.createdAt);
+                                const completed = new Date(task.completedAt);
+                                const due = new Date(task.dueDate);
+                                const actualDays = Math.floor((completed - created) / (1000 * 60 * 60 * 24));
+                                const plannedDays = Math.floor((due - created) / (1000 * 60 * 60 * 24));
+                                const diff = actualDays - plannedDays;
+                                
+                                return `
+                                    <div class="task-item">
+                                        <div class="task-item-header">
+                                            <div class="task-title">${task.title}</div>
+                                            <span style="color: ${diff > 0 ? 'var(--danger)' : 'var(--success)'}; font-size: 13px;">
+                                                ${diff > 0 ? `${diff} days late` : diff < 0 ? `${Math.abs(diff)} days early` : 'On time'}
+                                            </span>
+                                        </div>
+                                        <div class="task-meta">
+                                            <span>Planned: ${plannedDays} days</span>
+                                            <span>Actual: ${actualDays} days</span>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>`;
+                    })()}
+                </div>
+            `;
+        }
+        
+        // ============================================
+        // USER MANAGEMENT
+        // ============================================
+        
+        function renderUserManagement() {
+            const db = getDB();
+            const user = getCurrentUser();
+            const isAdmin = user.role === 'admin';
+            
+            document.getElementById('mainContent').innerHTML = `
+                <div class="page-header">
+                    <h1 class="page-title">User Management</h1>
+                    ${isAdmin ? '<button class="btn btn-primary" onclick="openNewUserModal()">+ Add User</button>' : ''}
+                </div>
+                
+                <div class="task-list">
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Department</th>
+                                <th>Role</th>
+                                <th>Tasks</th>
+                                ${isAdmin ? '<th>Actions</th>' : ''}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${db.users.map(u => {
+                                const taskCount = db.tasks.filter(t => t.ownerId === u.id).length;
+                                return `
+                                    <tr>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <div class="user-avatar" style="width: 28px; height: 28px; font-size: 12px;">
+                                                    ${u.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                                </div>
+                                                ${u.name}
+                                            </div>
+                                        </td>
+                                        <td>${u.email}</td>
+                                        <td>${u.department || '-'}</td>
+                                        <td><span class="user-role role-${u.role}">${u.role}</span></td>
+                                        <td>${taskCount} tasks</td>
+                                        ${isAdmin ? `
+                                            <td>
+                                                <button class="btn btn-sm btn-secondary" onclick="editUser('${u.id}')">Edit</button>
+                                            </td>
+                                        ` : ''}
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+        
+        function openNewUserModal() {
+            document.getElementById('userModalTitle').textContent = 'Add New User';
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('passwordGroup').style.display = 'block';
+            document.getElementById('userPassword').required = true;
+            openModal('userModal');
+        }
+        
+        function editUser(userId) {
+            const db = getDB();
+            const user = db.users.find(u => u.id === userId);
+            
+            document.getElementById('userModalTitle').textContent = 'Edit User';
+            document.getElementById('userId').value = user.id;
+            document.getElementById('userFullName').value = user.name;
+            document.getElementById('userEmail').value = user.email;
+            document.getElementById('userDept').value = user.department || '';
+            document.getElementById('userRole').value = user.role;
+            document.getElementById('userPassword').value = '';
+            document.getElementById('passwordGroup').style.display = 'block';
+            document.getElementById('userPassword').required = false;
+            
+            openModal('userModal');
+        }
+        
+        function handleUserSubmit(e) {
+            e.preventDefault();
+            
+            const db = getDB();
+            const userId = document.getElementById('userId').value;
+            
+            const userData = {
+                name: document.getElementById('userFullName').value,
+                email: document.getElementById('userEmail').value,
+                department: document.getElementById('userDept').value,
+                role: document.getElementById('userRole').value
+            };
+            
+            const password = document.getElementById('userPassword').value;
+            
+            if (userId) {
+                // Update existing user
+                const user = db.users.find(u => u.id === userId);
+                Object.assign(user, userData);
+                if (password) user.password = password;
+                showToast('User updated successfully');
+            } else {
+                // Create new user
+                if (!password) {
+                    showToast('Password is required', 'error');
+                    return;
+                }
+                
+                if (db.users.some(u => u.email === userData.email)) {
+                    showToast('Email already exists', 'error');
+                    return;
+                }
+                
+                const newUser = {
+                    id: 'u' + Date.now(),
+                    ...userData,
+                    password,
+                    createdAt: new Date().toISOString()
+                };
+                
+                db.users.push(newUser);
+                showToast('User created successfully');
+            }
+            
+            saveDB(db);
+            closeModal('userModal');
+            renderUserManagement();
+        }
+        
+        // ============================================
+        // SYSTEM DASHBOARD
+        // ============================================
+        
+        function renderSystemDashboard() {
+            const db = getDB();
+            const allTasks = db.tasks.filter(t => !t.parentId);
+            
+            const stats = {
+                totalUsers: db.users.length,
+                totalTasks: allTasks.length,
+                activeTasks: allTasks.filter(t => t.status !== 'complete').length,
+                completedTasks: allTasks.filter(t => t.status === 'complete').length,
+                overdueTasks: allTasks.filter(t => new Date(t.dueDate) < new Date() && t.status !== 'complete').length
+            };
+            
+            // Tasks per user
+            const tasksPerUser = db.users.map(u => ({
+                name: u.name,
+                count: db.tasks.filter(t => t.ownerId === u.id).length
+            })).sort((a, b) => b.count - a.count);
+            
+            const maxUserTasks = Math.max(...tasksPerUser.map(u => u.count), 1);
+            
+            document.getElementById('mainContent').innerHTML = `
+                <div class="page-header">
+                    <h1 class="page-title">System Overview</h1>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Users</h3>
+                        <div class="value">${stats.totalUsers}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Tasks</h3>
+                        <div class="value">${stats.totalTasks}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Tasks</h3>
+                        <div class="value">${stats.activeTasks}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Completed Tasks</h3>
+                        <div class="value">${stats.completedTasks}</div>
+                        <div class="trend up">${stats.totalTasks ? Math.round(stats.completedTasks / stats.totalTasks * 100) : 0}% completion rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Overdue Tasks</h3>
+                        <div class="value" style="color: var(--danger)">${stats.overdueTasks}</div>
+                    </div>
+                </div>
+                
+                <div class="report-section">
+                    <h3>Tasks Distribution by User</h3>
+                    <div class="bar-chart">
+                        ${tasksPerUser.slice(0, 6).map(u => `
+                            <div class="bar-item">
+                                <div class="bar-value">${u.count}</div>
+                                <div class="bar" style="height: ${(u.count / maxUserTasks) * 100}px;"></div>
+                                <div class="bar-label">${u.name.split(' ')[0]}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="report-section">
+                    <h3>Recent Activity</h3>
+                    <div class="task-list" style="box-shadow: none;">
+                        ${allTasks.slice(-10).reverse().map(task => {
+                            const owner = db.users.find(u => u.id === task.ownerId);
+                            return `
+                                <div class="task-item" onclick="openTaskDetail('${task.id}')">
+                                    <div class="task-item-header">
+                                        <div class="task-title">${task.title}</div>
+                                        <span class="status-badge status-${task.status}">${formatStatus(task.status)}</span>
+                                    </div>
+                                    <div class="task-meta">
+                                        <span>👤 ${owner?.name || 'Unknown'}</span>
+                                        <span>📅 ${formatDate(task.createdAt)}</span>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        
+        function formatStatus(status) {
+            const labels = {
+                'not-started': 'Not Started',
+                'in-progress': 'In Progress',
+                'complete': 'Complete'
+            };
+            return labels[status] || status;
+        }
+        
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+        
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = type === 'error' ? 'var(--danger)' : 'var(--gray-800)';
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        // Close modals when clicking overlay
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+        
+        // Initialize app on load
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
